@@ -1,0 +1,180 @@
+---
+title: "14_sok_2008_h23_utf1"
+kandidatnr: "14"
+format: html
+editor: visual
+---
+
+I denne oppgaven er det ikke blitt brukt noen som helst type form for Kunstig Intelligens/KI.
+
+Utfordring 1.1.
+
+library(tlmgr)
+
+```{r}
+rm(list=ls()) 
+library(tidyverse)
+library(lubridate)
+library(rjstat)
+library(httr)
+library(tidyr)
+library(ggplot2)
+library(readr)
+```
+
+```{r}
+
+#Her er ikke begge kjønn hentet med i json spørringen ettersom vi vil se på forskjellen mellom kvinner og menn.
+
+url <- "https://data.ssb.no/api/v0/no/table/04544/"
+
+query <- '{
+  "query": [
+    {
+      "code": "Kjonn",
+      "selection": {
+        "filter": "item",
+        "values": [
+          "1",
+          "2"
+        ]
+      }
+    },
+    {
+      "code": "Yrkesstatus",
+      "selection": {
+        "filter": "item",
+        "values": [
+          "00"
+        ]
+      }
+    },
+    {
+      "code": "ContentsCode",
+      "selection": {
+        "filter": "item",
+        "values": [
+          "FaktiskArbeidstid"
+        ]
+      }
+    }
+  ],
+  "response": {
+    "format": "json-stat2"
+  }
+}'
+
+
+hent_indeks.tmp <- url %>%
+  POST(body = query, encode = "json")
+
+df1 <- hent_indeks.tmp %>%
+  content("text") %>%
+  fromJSONstat() %>%
+  as_tibble()
+
+#Splitter menn og kvinner for å lettere kunne plotte deres verdier i samme graf og forhindre at de blir plottet sammen.
+
+
+
+#Fjernet 0 fra "values" hos kjønn i json spørringen for å fjerne begge kjønn slik at vi sitter igjen med kun menn og kvinner. Dette gjør at vi kan finne empiriske beviser på forskjellen i økonomien til menn og kvinner i Norge.
+```
+
+```{r}
+
+menn <- df1[1:27, ]
+  
+kvinner <- df1[28:54, ]
+
+#Splitter menn og kvinner for å lettere kunne plotte deres verdier i samme graf og forhindre at de blir plottet sammen.
+
+
+
+ggplot() +
+  geom_col(data = menn, aes(x = år, y = value), color = 'blue') +
+  geom_col(data = kvinner, aes(x = år, y = value), color = 'red') +
+  labs(x = 'År',
+       y = 'Antall arbeidstimer i uken',
+       title = 'Ukentlige arbeidstimer hos kvinner og menn i Norge fra 1996-2022') +
+  theme(axis.text.x = element_text(angle = 90))
+
+#Plotter to dataframesene menn og kvinner over hverandre etter år og arbeidstimer slik at vi kan se utviklingen i ukentlige arbeidstimer fra 1996-2022.
+```
+
+#### På denne grafen ser vi forskjellen mellom antall arbeidstimer i uken hos menn(blå) og kvinner(rød) fra 1996 - 2022. Kvinner jobber en vesentlig del mindre en hva menn gjør. Arbeidstimene har gått noe ned for menn i nyere tid, noe som kan være en effekt av det sosialøkonomiske situasjonen i Norge. Vi ser også at kvinners arbeidstid ikke har utviklet seg så mye på disse nesten 30 årene men en liten økning er det.
+
+```{r}
+#Bruker csv2 for å sette en delimiter (;) og separere kolonner 
+women <- read.csv2("https://raw.githubusercontent.com/uit-sok-2008-h23/uit-sok-2008-h23.github.io/main/assets/women.csv")
+
+
+ggplot() +
+  geom_col(data = women, aes(x = women$tot_full_rate, y = women$fem_emp_rate_0_2)) +
+  labs(x = 'Uker med fullt betalt barnepermisjon.',
+       y = '% Kvinner tilbake i arbeid med barn på 0-2 år.',
+       title = '% Kvinner med barn 0-2 år tilbake i arbeid med ulike uker barnepermisjon.') +
+  theme(axis.text.x = element_text(angle = 90))
+```
+
+#### På denne grafen ser vi % andelen med kvinner som kommer tilbake til arbeid etter forskjellige mengder med uker i barnepermisjon med barn på 0-2 år og den under er det samme bare med 6-14 år. Vi ser andelen som kommer tilbake er lav, men dette kan være en effekt av at de lange permisjonene blir tatt.
+
+```{r}
+ggplot() +
+  geom_col(data = women, aes(x = women$tot_full_rate, y = women$fem_emp_rate_6_14)) +
+  labs(x = 'Uker med fullt betalt barnepermisjon.',
+       y = '% Kvinner tilbake i arbeid med barn på 6-14 år.',
+       title = '% Kvinner med barn 6-14 år tilbake i arbeid med ulike uker barnepermisjon.') +
+  theme(axis.text.x = element_text(angle = 90))
+```
+
+#### Sammenligner vi denne grafen og den forrige så kan vi se at det er litt sånn frem og tilbake på hva som henger sammen. Dette kan stamme fra forskjellen i det geopolitiske og det sosialøkonomiske forholdet til de enkelte kvinnene/familiene i området der de holder til, ikke minst kulturelle forskjeller på landene dataen er hentet fra. Dataen vi ser i grafen her og den over er fra 24 forskjellige land. Derfor tror jeg det vi ser er et bredt spekter med mange mulige måter å handtere flere forskjellige utgangspunkter på, uansett hva din stat legger til grunne for det.Man ser klart at det er variasjon i hvor mange kvinner hvert enkelt land klarer å få tilbake i arbeid.
+
+#### Men mye av dette avhenger av landets økonomi, familiens økonomi og sikkerhetsnettet/støtteapparatet rundt familien.Jeg mener at de geopolitiske, sosialøkonomiske og kulturelle forskjeller i disse landene er store og får derfor veldig mye forskjellig data. Altså det er ikke bare hvor mange uker med full støtte, det er en haug med andre faktorer som spiller inn.Det er viktig for Norge at kvinner har høy yrkesdeltakelse er for å kunne bidra til å skape økonomisk stabilitet for seg selv og en evt. familie. Samditig er det viktig at vi har flere som jobber slik at vi, via skatter og avgifter kan finansiere støtteordningene/velferdsstaten vi har her til lands, og at de er med å bidrar i stedet for å være en byrde til samfunnet. Velferdsmodellen fungerer ikke om ingen betaler skatt. Samtidig er det viktig at barnetallet er høyt for å forhindre en eldrebølge ettersom at en eldrebølge er noe som vil påføre staten og befolkningen store negative konsekvenser. Og for å "erstatte" seg selv i framtiden og bidra til vekst i samfunnet. Ringvirkningene av vekst i samfunnet vil føre til økonomisk vekst, og et sunt barnetall vil føre til en bærekraftig framtid for alle aldersgrupper. Dette er et grunnlag for videre økonomisk vekst i framtiden.
+
+### Utfordring 1.2
+
+```{r}
+#Importerte datasettet fra eurostat og lagrer det i dataframen eurostatdata og gir columnen time_period nytt navn(year) og obs_value(value) og filtrere dataen slik at jeg kun har 2019.
+
+eurostatdata <- read_csv("https://ec.europa.eu/eurostat/api/dissemination/sdmx/2.1/data/HLTH_SHA11_HF/?format=SDMX-CSV&lang=en&label=label_only", 
+    col_types = cols(DATAFLOW = col_skip(), 
+        `LAST UPDATE` = col_skip(), freq = col_skip(), 
+        OBS_FLAG = col_skip())) %>%
+  rename(year = "TIME_PERIOD") %>%
+  rename(value = "OBS_VALUE") %>%
+  filter(year == 2019)
+
+```
+
+```{r}
+
+dfeuro <- eurostatdata %>%
+  filter(unit == "Percentual share of total current health expenditure (CHE)"| unit == "Purchasing power standard (PPS) per inhabitant") %>%
+  filter(icha11_hf == "Household out-of-pocket payment")
+
+#Her filtrer vi inn kunne de "unitsene" vi vil ha og det vi ville ha fra icha11_hf.
+
+dfeuro <- dfeuro %>%
+  arrange(geo)   #Arrangerer etter geo i dataframen for å lettere kunne fjerne solo oppføringene. Altså de som ikke har et fullt sett med data.
+
+dfeuro1 <- dfeuro[c(-5, -18:-29, -48), ] #Fjerner de med ufullstendig dataset. Fjerner også de som tar med seg store eu områder også. Tilsammen 19
+  
+dfeurowide <- dfeuro1 %>%
+  pivot_wider(names_from = unit, values_from = value) #Gjør dataframen wide slik at det blir enklere å ggplotte.
+```
+
+```{r}
+dfeurowide %>%
+  ggplot(aes(x = `Percentual share of total current health expenditure (CHE)` , y = `Purchasing power standard (PPS) per inhabitant`)) +
+  geom_smooth() +
+  geom_point() +
+  geom_text(aes(label = geo, vjust = -0.75))
+
+#Plotter in datasettet.
+```
+
+#### I punktdiagrammet over ser vi sammenhengen mellom PPS og CHE . Denne viser oss hvor mange prosent av kjøpekraften til individer i forskjellige land i europa, som gikk til deres totale helsekostnader for året 2019. Korrelasjonen viser oss at en høyere kjøpekraft fører til en høyere egenandel.
+
+#### Økte egenandeler kan føre til at konsumentene vil etterspørre helsetjenester inntil betalingsvilligheten er like prisen de må betale. Ved full helseforsikring vil rasjonelle individer tilpasse seg slik at prisen var ikke eksisterende og fortsette å konsumere helt fram til marginalnytten var positiv. Hvis individet ikke har helse forsikring så ville det konsumert til marginalnytten var større enn marginalkostnadene.
+
+#### Et gratis forbruk, eller et forbruk av helsetjenester uten egenandel kan føre til et overforbruk, altså et ineffektivt ressursbruk av samfunnets midler noe som fører til velferdstap. Høye egenandeler kan føre til at samfunnets fattigste står uten helsehjelp til fordel for effektiv helsehjelp for de som er rikere. Det kan også føre til at de økte egenandelene letter på trykket helsetjensten sliter med. De som ikke har trang for legetime møter ikke opp uten grunn.
