@@ -1,0 +1,344 @@
+---
+title: "77_2008_h23_utf3"
+author: "77"
+
+date: last-modified
+date-format: "DD-MM-YYYY"
+
+toc: true
+toc-title: "Innholdsliste"
+
+format: pdf
+echo: false
+warning: false
+editor: visual
+---
+
+# Utfordring 3
+
+```{r}
+
+rm(list = ls())
+
+library(tidyverse)
+library(rjstat)
+library(httr)
+```
+
+## Oppgave 3.1
+
+### 3.1.1
+
+```{r}
+
+
+
+l_1 <- seq(0, 60, by = .01) 
+
+
+df <- data.frame(l_1)
+
+#lag aksen for tegningen
+
+axes_1 <- ggplot(df, aes(l_1))+
+  labs(x="Fritid", y="Konsum i 10-tall") +
+  theme(axis.title = element_text(size = 10),
+        plot.title = element_text(size = 10),
+        panel.background = element_blank(), # hvit bakgrunn
+        axis.line = element_line(colour = "black"), # sett inn akselinjer
+        axis.title.x = element_text(hjust = 1),
+        axis.title.y = element_text(angle = 0, vjust = 1, hjust=1))+ # juster labels på aksene  
+  coord_fixed(ratio = 1)+ # lik skala for x og y aksen
+  scale_x_continuous(limits = c(0, 70), expand = c(0, 0))+
+  scale_y_continuous(limits = c(0, 1000), expand = c(0, 0))+ # begrense aksene
+  coord_fixed(ratio = (70 - 0) / (1000 - 0))
+```
+
+### Matte forklart i latex
+
+**Uten Stønad:** $$  U(c,l) = 100^{0.5} \times 60^{0.5} \approx 77.46$$
+
+$$\frac{(77.46)^2}{20} \approx \frac{6000}{20} = 300 $$
+
+$$ 300 - 100 = \frac{200}{40}  $$
+
+$$\frac{200}{40} = 5 $$
+
+**Med stønad:**
+
+$$U(c, l) = 200^{0.5} \times 60^{0.5} \approx 109.54$$ $$\frac{(109.54)^2}{20} = \frac{12000}{20}=600$$
+
+$$ 600 - 100 = \frac{500}{40}  $$
+
+$$\frac{500}{40} = 12.5 $$
+
+```{r}
+
+#Regner ut koffesientene til reservasjonslønnen (u5=uten stønad og u6=med stønad) Altså (Wr0 og Wr1).
+
+#Her er u1=U0 og u2=U1, det vi setter inn for å få indifferansekurvene. Altså bare U)c^0.5 l^0.5 løst ut.
+
+# m = 100   s = 100.
+
+u1 = (100^0.5)*(60^0.5)
+u2 = (200^0.5)*(60^0.5)
+
+u3 = (u1^2)/(20)
+u4 = (u2^2)/(20)
+
+u5 = (u3-100)/40
+u6 = (u4-100)/40
+
+
+u5
+u6
+```
+
+#### 3.1.1 Graf
+
+```{r}
+# nyttefunkjsonen som brukes U=c^.5x l^.5 (Cobb-Douglas)
+
+# vi angir noen indifferenskurver
+I_0 <- function(l_1) (77.45^2)/(l_1)  # bytt ut U0 mot et relevant nivå på nytten
+I_1 <- function(l_1) (109.54^2)/(l_1) # bytt ut U1 mot et relevant nivå på nytten
+
+# Reservasjonslønn uten stønad
+wr0 <- function(l_1) {
+  return(100 + 5 * (60-l_1)) #sett inn tall for skjærningspunkt med Y-akselen og koeffisienten til l_1
+}
+
+# Reservasjonslønn med stønad
+wr1 <- function(l_1) {
+  return(100 + 12.5 * (60-l_1)) #sett inn tall for skjærningspunkt med Y-akselen og koeffisienten til l_1
+}
+
+
+figur_2 <- axes_1+
+  stat_function(df,
+                fun=I_0,
+                mapping = aes() #Indifferansekurve 0
+  )+
+  stat_function(df,
+                fun=I_1,
+                mapping = aes() #Indifferansekurve 1
+  )+
+  annotate("text",
+           x=7.5, #Sett inn tall
+           y=982.5, #Sett inn tall
+           label=expression(I[0]))+ #Navn indifferansekurve 0
+  annotate("text",
+           x=15, #Sett inn tall
+           y=982.5, #Sett inn tall
+           label=expression(I[1]))+#Navn indifferansekurve 1
+  geom_segment(aes(x = 0, y = wr0(0), xend = 60, yend = wr0(60)), color="darkblue") + #Kurve som beskriver reservasjonslønn da stønad == 0
+  geom_segment(aes(x = 0, y = wr1(0), xend = 60, yend = wr1(60)), color="blue") + #Kurve som identifiserer heltidsarbeid. (sett in tall)
+  geom_segment(aes(x=60, y=200, xend=60, yend=0), linetype="dashed")+ #Sett inn tall som beskriver budsjettbetingelsen ved l0 = 60 (vertikal linje)
+  geom_segment(aes(x=0, y=100, xend=60, yend=100), linetype="dashed", color="orange")+ #Sett inn tall som beskriver arbeidsfri inntekt
+  geom_segment(aes(x=0, y=200, xend=60, yend=200), linetype="dashed", color="red")+ #Identifiser reservasjonslønn da stønad == 100
+  geom_segment(aes(x=20, y=0, xend=20, yend=1000), linetype="dashed")+
+  annotate("text",x=62,y=180,
+           label=expression(B[1]))+ 
+  annotate("text",x=62,y=80, 
+           label=expression(B[0]))+ 
+  annotate("text",x=5,y=230, 
+           label="m + s", color="red")+ 
+  annotate("text",x=5,y=130, 
+           label="m", color="orange")+ 
+  annotate("text",x=22.5,y=315, 
+           label=expression(A[0]))+ 
+  annotate("text",x=22.5,y=615, 
+           label=expression(A[1]))+ 
+  annotate("text",x=3.5,y=775,
+           label=expression(Wr[1]))+
+  annotate("text",x=3.5,y=430,
+           label=expression(Wr[0]))
+figur_2
+```
+
+I et perfekt arbeids marked har Tone en arbeidsfri inntekt (m) som er 100. Hun kan ikke velge å jobbe mindre en 40 timer eller mer en 60 timer per uke. Dersom Tone velger å ikke jobbe har hun tilgang til stønad (s) på 100.
+
+Ut fra grafen ser vi at for å velge bort fritid ( $l$ ) må hun ha et konsum (c) som er på kryssnings punktet A_0 ettersom at det er der hun har reservasjonslønnen (Wr0), altså den minstelønnen hun krever for å jobbe når hun mottar arbeidsfri inntekt (m) uten stønad (s). Vi ser på grafen at Tone er indifferent til A_0 og B_0, det sier oss at Tone kan fritt velge og vil få lik nytte av valget mellom A_0 og B_0.
+
+Når Tone mottar arbeidsfri inntekt (m) og stønad (s) ser vi at nyttenivået hennes øker og dermed øker også reservasjonslønnen hennes fra (Wr0) til (Wr1). Nå som nyttenivå har økt ser vi at konsumet (c) hun mottar av B_1 har samme nytte nivå som A_1. Hun kan derfor igjen velge fritt om hun vil gå inn i arbeidsmarkedet eller fortsette å få stønad. Selv med økt nytte nivå er Tone indifferent. Den økte inntekten stønaden (s) gir henne gjør at reservasjons lønnen(Wr1) blir enda høyere etter som den må kompensere for et evt. tap av stønaden (s) hvis hun bestemmer seg for å jobbe.
+
+### 3.1.2
+
+I et ufullkomment marked så minker trygden alternativ kostnaden for å ikke ha jobb ved at søkeren vil ha en lavere søk-intensitet og en høyere dynamisk reservasjonslønn samtidig som den. Dynamisk reservasjonslønn er den lønnen som gjør at individet er indifferent mellom å akseptere et lønnstilbud og fortsette jobbsøken. Altså forskjellen på å jobbe eller å være arbeidsledig. En statisk reservasjonslønn er den lønnen som gjør at individet er indifferent mellom å gå inn på arbeidsmarkedet og det å ikke delta.
+
+## Oppgave 3.2
+
+### 3.2.a
+
+```{r}
+ 
+url <- "https://data.ssb.no/api/v0/no/table/12441/"
+
+query <- '{
+  "query": [
+    {
+      "code": "Kjonn",
+      "selection": {
+        "filter": "item",
+        "values": [
+          "0"
+        ]
+      }
+    },
+    {
+      "code": "NACE2007",
+      "selection": {
+        "filter": "item",
+        "values": [
+          "10-33"
+        ]
+      }
+    },
+    {
+      "code": "Sykefraver2",
+      "selection": {
+        "filter": "item",
+        "values": [
+          "E"
+        ]
+      }
+    },
+    {
+      "code": "Tid",
+      "selection": {
+        "filter": "item",
+        "values": [
+          "2001",
+          "2002",
+          "2003",
+          "2004",
+          "2005",
+          "2006",
+          "2007",
+          "2008",
+          "2009",
+          "2010",
+          "2011",
+          "2012",
+          "2013",
+          "2014",
+          "2015",
+          "2016",
+          "2017",
+          "2018",
+          "2019",
+          "2020",
+          "2021",
+          "2022"
+        ]
+      }
+    }
+  ],
+  "response": {
+    "format": "json-stat2"
+  }
+}'
+
+  
+  hent_indeks.tmp <- url %>%
+  POST(body = query, encode = "json")
+
+
+df_egenmelding <-  hent_indeks.tmp %>%
+  content("text") %>%
+  fromJSONstat() %>%
+  as_tibble() 
+```
+
+```{r}
+
+df_egenmelding %>%
+  mutate(år=as.integer(år)) %>%
+  ggplot((aes(x=år, y=value)))+
+  geom_line()+
+  labs(x= "År",
+       y= "Prosent fravær",
+       title = "Prosent egenmeldinger fra år 2001-2022",
+       subtitle= "For begge kjønn")+
+  theme(axis.text.x=element_text(size= 10, angle=90))+
+  theme_bw()
+```
+
+Over har vi en graf over prosent sykefravær i prosent fra år 2001 til 2022. Det har vært en økning under korona, men også før det. Fra 2001 har sykeværsprosenten i industri for begge kjønn økt med rundt 0.6%. Den største økningen vi ser i løpet av denne 20 års perioden kom i 2019 med en økning på 0.5%. Altså ser vi en økende trend med egenmelding.
+
+Vi hører i teksten til sangen Tredagern av GatasParlament at egenmelding blir brukt til å få seg noen ekstra fridager der man bare slapper av og kan gjøre hva man vil. Egenmelding blir misbrukt for å ordne seg noen ekstra dager fri, noe som går i mot formålet til egenmeldinger generelt.
+
+Hovedformålet til egenmeldinger er at ved mindre sykdom så kan du melde fra til arbeidsgiver for å få fri i kortere perioder for å kunne komme seg igjen og deretter tilbake til arbeid. Hvis det skulle vise seg å være langvarig og man trenger ekstra tid for å komme seg på, så har man mulighet til å dra til lege for sykemelding.
+
+Sangeren synger om når han leverer egenmelding og tar en tredager. Med dette refererer han til at han har brukt egenmeldingen for å kunne få tre ekstra dager fri og med det løyet om at han var syk. Det er dette som danner grunnlaget for disinsentivproblemet.
+
+### 3.2.b
+
+```{r}
+I_2 <- function(l_1) (134.16^2)/(l_1)
+
+I_3 <- function(l_1) (173.20^2)/(l_1)
+```
+
+```{r}
+
+figur_3 <- axes_1+
+  stat_function(df, fun=I_3, mapping = aes())+
+  annotate("text", x=32.5, y=982.5, label=expression(I[0]))+
+  geom_segment(aes(x = 0, y = 700, xend = 60, yend = 100), color="darkblue") +
+  geom_segment(aes(x=60, y=0, xend=60, yend=500))+
+  geom_segment(aes(x=20, y=0, xend=20, yend=500), linetype="dashed", color="red")+
+  geom_segment(aes(x=20, y=500, xend=60, yend=500), color="orange")+
+  geom_segment(aes(x=0, y=100, xend=60, yend=100), linetype="dashed")+
+  annotate("text",x=2.5,y=130, label="m")+
+  annotate("text", x=61.5, y=520, label="C")+
+  annotate("text", x=21.5, y=520, label="A")+
+  annotate("text", x=61.5, y= 120, label="B")+
+  annotate("text", x=40, y=520, label="helning = -(w-1w)")
+  
+figur_3
+```
+
+Disinsentivproblemet som kommer fram i sangen Tredagern av GatasParlament kan vi forklare ved hjelp av den grafiske modellen ovenfor. Egenmeldinger kompenserer arbeidstaker med 100% av det han/hun kunne gått glipp av dersom støtte ordningen ikke var innført.
+
+Dette gir arbeidstakeren muligheten til å misbruke egenmeldinger og heller kunne levere inn en egenmelding til fordel for å få en betalt fridag i stedet for å måtte jobbe for pengene. Med andre ord så velger arbeideren fritid over konsum etter som at konsumet blir kompensert av støtteordningen.
+
+F.eks hvis vi ser på kryssningspunkt B. Så ser vi at hvis arbeideren velger 60 timer med fritid, så velger arbeideren lite konsum til fordel for en større mengde fritid. Men hvis arbeideren velger punkt A, så ser vi at arbeideren velger en mindre mengde fritid til fordel for en større mengde med konsum.
+
+Hvis arbeideren velger å bruke en egenmelding på en arbeidsdag så ser vi at arbeideren kommer på et nytt nyttenivå (I_0) punkt C. Her oppnår arbeideren like mye konsum som i punkt A og like mye fritid som i punkt B. Altså vil arbeideren alltid forsøke å tilpasse seg i punkt C etter som at det gir arbeideren mest nytte.
+
+### 3.2.c
+
+```{r}
+
+figur_4 <- axes_1+
+  stat_function(df, fun=I_2, mapping = aes())+
+  stat_function(df, fun=I_3, mapping = aes())+
+  annotate("text", x=20, y=982.5, label=expression(I[1]))+
+  annotate("text",x=32.5, y=982.5, label=expression(I[0]))+
+  geom_segment(aes(x = 0, y = 700, xend = 60, yend = 100), color="darkblue")+
+  geom_segment(aes(x=60, y=0, xend=60, yend=500))+
+  geom_segment(aes(x=20, y=500, xend=60, yend=300), color="red")+
+  geom_segment(aes(x=20, y=500, xend=60, yend=500), color="orange")+
+  geom_segment(aes(x=0, y=100, xend=60, yend=100), linetype="dashed")+
+  geom_segment(aes(x=20, y=0, xend=20, yend=500), color="red", linetype="dashed")+
+  annotate("text", x=2.5, y=130, label="m")+
+  annotate("text", x=61.5, y=520, label="C")+
+  annotate("text", x=21.5, y=520, label="A")+
+  annotate("text", x=61.5, y= 120, label="B")+
+  annotate("text", x=55, y=360, label="D")+
+  annotate("text", x=40, y=425, label="helning = -(w-0.60w)", angle="342.5")+
+  annotate("text", x=40, y=520, label="helning = -(w-1w)")
+
+figur_4
+```
+
+I grafen til 3.2.b så vi hva nytten av egenmeldinger ligger på nå ettersom at egenmeldinger kompenserer 100% av arbeidstakers lønn for 100% av arbeidsdagen egenmeldinger blir levert inn på. Dette er et disinsentiv ettersom at det insintiverer det å misbruke egenmeldinger får å få mer fritid istedet for å jobbe. Egenmeldings dager har høyere nytte i forhold til hva en vanlig arbeidsdag har ettersom at du får like mye konsum/lønn samtidig som du får maks fritid, og det er dette som skaper disinsentivproblemet.
+
+Et virkemiddel som jeg kunne hjulpet å redusere disintensiveffekten som beskrives i sangen ville vært å redusere den prosentvise andelen som egenmeldinger dekker. I grafen over har vi lagt til punkt D som krysser (I_1) kompenserer egenmeldings andelen kun 60% av lønnen i forhold til den normale 100% som egenmeldinger egentlig dekker.
+
+Vi senker den prostenvise andelen kompensert med 40% slik at nyttenivået blir redusert men fortsatt høyere en hva . Vi flytter nytten ned fra kryssningspunkt C til kryssningspunkt D for å simulere en reduksjon i den prosentvise kompensasjonen for egenmeldinger. Vi forsøker med en reduksjon i støtten til å omgjøre det fra et disintensiv til den trygden det er ment å være. Arbeidstakeren vil da ha mest nytte i punkt A, når de er i jobb .
+
+### Appendix
+
+I denne oppgaven har jeg ikke brukt noen form for KI.
